@@ -1,6 +1,6 @@
-# Proposal for a New Music Distribution Format
+# OMD: The Open Music Distribution Format
 
-![prototype](images/prototype-front.jpg)
+![prototype](images/prototype-front.jpg)![prototype](images/prototype-back.jpg)
 ## Description
 A novel music distribution format, similar in size to Minidisc, is proposed. The aim is to utilize existing case trays and and other minidisc assecoires, making production and integration easier.
 
