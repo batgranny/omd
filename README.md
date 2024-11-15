@@ -4,6 +4,8 @@
 ## Description
 A new DIY music distribution format. The aim is to provide a modern, easy to produce portable physical format similar to cassette or minidisc, utilize existing case trays and and other  accessories, making production and integration easier.
 
+The 'format' is essentially a housing compatiable with a standard SD card which can be 3D printed. The aim is to give artists the opportunity to create a physical, sellable copy of their work in a portable physical format that they can produce at low volumes, low cost and high fidelity.  Fans get a high quality copy of the music in a collectable format that can include album art, liner notes etc. 
+
 ## Motivation
 Traditional audio formats such as vinyl records, cassette tapes, and compact discs featured a haptic experience and limited capacity, leading to a more focused music listening experience.
 
