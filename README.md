@@ -2,7 +2,7 @@
 
 ![prototype](images/prototype-front.jpg)!
 ## Description
-A novel music distribution format, similar in size to Minidisc, is proposed. The aim is to utilize existing case trays and and other minidisc assecoires, making production and integration easier.
+A new DIY music distribution format. The aim is to provide a modern, easy to produce portable physical format similar to cassette or minidisc, utilize existing case trays and and other  accessories, making production and integration easier.
 
 ## Motivation
 Traditional audio formats such as vinyl records, cassette tapes, and compact discs featured a haptic experience and limited capacity, leading to a more focused music listening experience.
