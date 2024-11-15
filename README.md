@@ -2,9 +2,17 @@
 
 ![prototype](images/prototype-front.jpg)!
 ## Description
-A new DIY music distribution format. The aim is to provide a modern, easy to produce portable physical format similar to cassette or minidisc, utilize existing case trays and and other  accessories, making production and integration easier.
+A new DIY music distribution format. The aim is to provide a modern, easy to produce portable physical format similar to cassette or minidisc, utilize existing case trays and and other accessories, making production and integration easier.
 
 The 'format' is essentially a housing compatiable with a standard SD card which can be 3D printed. The aim is to give artists the opportunity to create a physical, sellable copy of their work in a portable physical format that they can produce at low volumes, low cost and high fidelity.  Fans get a high quality copy of the music in a collectable format that can include album art, liner notes etc that they can play using existing hardware or via cheap and widely available adapters.
+
+## Accessibility for Manufacturers
+One of the unique features of this new format is its accessibility to manufacturers. Any individual or company can produce players and cartridges, promoting a community-driven approach to music distribution.
+
+This proposal combines elements from various traditional mediums with modern technology to create an innovative platform that values the collecting and sharing experience, while providing superior audio quality.
+
+## Hardware
+There will be a reference design in slvs Fusion format for the cartridge that can be used as template and a simple portable MSD comapct palyer based on an ESP audio dev kit.
 
 ## Motivation
 Traditional audio formats such as vinyl records, cassette tapes, and compact discs featured a haptic experience and limited capacity, leading to a more focused music listening experience.
@@ -39,15 +47,6 @@ To encourage the creation of complete albums, the playback limit on each cartrid
 - Allthough it can be disabled it is important for concentrated listening to one artists album as they intended it to be listened.
 - Large collections can lead to distractions and also makes changing the medium unnecesary.
 
-## Accessibility for Manufacturers
-One of the unique features of this new format is its accessibility to manufacturers. Any individual or company can produce players and cartridges, promoting a community-driven approach to music distribution.
 
-This proposal combines elements from various traditional mediums with modern technology to create an innovative platform that values the collecting and sharing experience, while providing superior audio quality.
-
-## Hardware
-There will be a reference design in slvs Solvespace format for the cartridge that can be used as template and a simple portable MSD comapct palyer based on an ESP audio dev kit.
 
 ## License
-
-23/10/2024 11:04
-MSD a proposal for a open music distribution system by Thomas Herrmann is marked with CC0 1.0 Universal 
