@@ -33,10 +33,13 @@ sudo ./install.sh
 echo "Setup complete! rebooting..."
 sudo reboot now
 
-#Jan 05 16:12:14 raspberrypi mopidy[3835]:     frontend_class.start(config=config, core=core)
-#Jan 05 16:12:14 raspberrypi mopidy[3835]:   File "/usr/lib/python3/dist-packages/pykka/_actor.py", line 86, in start
-#Jan 05 16:12:14 raspberrypi mopidy[3835]:     obj = cls(*args, **kwargs)
-#Jan 05 16:12:14 raspberrypi mopidy[3835]:           ^^^^^^^^^^^^^^^^^^^^
-#Jan 05 16:12:14 raspberrypi mopidy[3835]:   File "/usr/local/lib/python3.11/dist-packages/mopidy_raspberry_gpio/frontend.py", line 52, in __init__
-#Jan 05 16:12:14 raspberrypi mopidy[3835]:     GPIO.add_event_detect(
-#Jan 05 16:12:14 raspberrypi mopidy[3835]: RuntimeError: Failed to add edge detection
+# Jan 05 16:16:56 raspberrypi mopidy[821]:   File "/usr/lib/python3/dist-packages/mopidy/commands.py", line 445, in start_frontends
+# Jan 05 16:16:56 raspberrypi mopidy[821]:     frontend_class.start(config=config, core=core)
+# Jan 05 16:16:56 raspberrypi mopidy[821]:   File "/usr/lib/python3/dist-packages/pykka/_actor.py", line 86, in start
+# Jan 05 16:16:56 raspberrypi mopidy[821]:     obj = cls(*args, **kwargs)
+# Jan 05 16:16:56 raspberrypi mopidy[821]:           ^^^^^^^^^^^^^^^^^^^^
+# Jan 05 16:16:56 raspberrypi mopidy[821]:   File "/usr/local/lib/python3.11/dist-packages/mopidy_raspberry_gpio/frontend.py", line 52, in __init__
+# Jan 05 16:16:56 raspberrypi mopidy[821]:     GPIO.add_event_detect(
+# Jan 05 16:16:56 raspberrypi mopidy[821]: RuntimeError: Failed to add edge detection
+# Jan 05 16:16:56 raspberrypi mopidy[821]: INFO     [HttpFrontend-9 (_actor_loop)] mopidy.http.actor HTTP server running at [::ffff:0.0.0.0]:6680
+# Jan 05 16:16:56 raspberrypi mopidy[821]: INFO     [MainThread] mopidy.commands Starting GLib mainloop
