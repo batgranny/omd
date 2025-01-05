@@ -30,4 +30,5 @@ sed -i 's|\$PIP_BIN install --upgrade|\$PIP_BIN install --break-system-packages 
 echo "Running the install.sh script..."
 sudo ./install.sh
 
-echo "Setup complete!"
+echo "Setup complete! rebooting..."
+sudo reboot now
