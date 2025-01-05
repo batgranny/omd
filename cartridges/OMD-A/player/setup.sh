@@ -33,6 +33,7 @@ sudo ./install.sh
 echo "Setup complete! rebooting..."
 sudo reboot now
 
+#THIS IS THE ERROR AFTER THE SCRIPT COMPLETES
 # Jan 05 16:16:56 raspberrypi mopidy[821]:   File "/usr/lib/python3/dist-packages/mopidy/commands.py", line 445, in start_frontends
 # Jan 05 16:16:56 raspberrypi mopidy[821]:     frontend_class.start(config=config, core=core)
 # Jan 05 16:16:56 raspberrypi mopidy[821]:   File "/usr/lib/python3/dist-packages/pykka/_actor.py", line 86, in start
