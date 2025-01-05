@@ -10,7 +10,7 @@ sudo apt install -y libopenblas-dev
 sudo apt-get install -y python3-rpi.gpio python3-spidev python3-pip python3-pil git
 sudo pip3 install numpy --break-system-packages
 
-#fix for RuntimeError: Failed to add edge detection issue
+#fix for RuntimeError: Failed to add edge detection issue - didn't fix it though
 echo "Installing st7789-python..."
 git clone https://github.com/pimoroni/st7789-python.git
 cd st7789-python/
