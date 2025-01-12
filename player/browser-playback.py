@@ -2,7 +2,7 @@ import os
 import RPi.GPIO as GPIO
 import time
 from PIL import Image, ImageDraw, ImageFont
-from st7789 import st7789
+from ST7789 import ST7789
 import pygame  # Import pygame for MP3 playback
 
 # Constants
@@ -10,8 +10,8 @@ MUSIC_DIR = "/home/pi/Music"
 BUTTONS = {
     "up": 24,            # Volume Up button
     "down": 6,           # Volume Down button
-    "select": 16,         # Play/Pause button
-    "back": 5           # Next button
+    "select": 16,        # Play/Pause button
+    "back": 5            # Next button
 }
 SPI_SPEED_MHZ = 80
 
@@ -19,6 +19,7 @@ SPI_SPEED_MHZ = 80
 current_dir = MUSIC_DIR
 current_index = 0
 playing = False  # Track whether music is playing
+current_volume = 0.5  # Initial volume set to 50%
 
 # Set up GPIO
 GPIO.setmode(GPIO.BCM)
@@ -27,7 +28,7 @@ for button in BUTTONS.values():
 
 # Initialize pygame mixer
 pygame.mixer.init()
-pygame.mixer.music.set_volume(0.5)  # Set initial volume to 50%
+pygame.mixer.music.set_volume(current_volume)
 
 # Set up the ST7789 display
 st7789 = ST7789(
@@ -53,7 +54,7 @@ def list_directory(directory):
     except PermissionError:
         return []
 
-def display_tree(current_dir, current_index, items, playing):
+def display_tree(current_dir, current_index, items, playing, volume):
     """Display the current directory and its contents on the screen."""
     # Create a new image with a black background
     image = Image.new("RGB", (240, 240), (0, 0, 0))
@@ -61,7 +62,7 @@ def display_tree(current_dir, current_index, items, playing):
 
     # Draw the current directory name at the top
     draw.rectangle((0, 0, 240, 20), fill=(0, 128, 128))  # Header background
-    status = "Playing" if playing else "Stopped"
+    status = f"Playing | Vol: {int(volume * 100)}%" if playing else "Stopped"
     draw.text((5, 2), f"Dir: {os.path.basename(current_dir)} | {status}", fill=(255, 255, 255), font=font)
 
     # Display the items in the directory
@@ -85,14 +86,25 @@ def play_mp3(file_path):
 
 def button_pressed(channel):
     """Handle button presses."""
-    global current_dir, current_index, playing
+    global current_dir, current_index, playing, current_volume
     items = list_directory(current_dir)
 
-    if channel == BUTTONS["up"]:
-        current_index = (current_index - 1) % len(items)
-    elif channel == BUTTONS["down"]:
-        current_index = (current_index + 1) % len(items)
-    elif channel == BUTTONS["select"]:
+    if playing:
+        # Volume control when music is playing
+        if channel == BUTTONS["up"]:
+            current_volume = min(current_volume + 0.1, 1.0)  # Increase volume
+            pygame.mixer.music.set_volume(current_volume)
+        elif channel == BUTTONS["down"]:
+            current_volume = max(current_volume - 0.1, 0.0)  # Decrease volume
+            pygame.mixer.music.set_volume(current_volume)
+    else:
+        # File navigation when no music is playing
+        if channel == BUTTONS["up"]:
+            current_index = (current_index + 1) % len(items)  # Browse down (reversed functionality)
+        elif channel == BUTTONS["down"]:
+            current_index = (current_index - 1) % len(items)  # Browse up (reversed functionality)
+
+    if channel == BUTTONS["select"]:
         selected_item = items[current_index]
         selected_path = os.path.join(current_dir, selected_item)
         if os.path.isfile(selected_path) and selected_path.endswith('.mp3'):
@@ -107,7 +119,7 @@ def button_pressed(channel):
         current_index = 0
 
     # Refresh display
-    display_tree(current_dir, current_index, list_directory(current_dir), playing)
+    display_tree(current_dir, current_index, list_directory(current_dir), playing, current_volume)
 
 # Attach event detection for buttons
 for button_name, pin in BUTTONS.items():
@@ -116,7 +128,7 @@ for button_name, pin in BUTTONS.items():
 try:
     # Initial Display
     items = list_directory(current_dir)
-    display_tree(current_dir, current_index, items, playing)
+    display_tree(current_dir, current_index, items, playing, current_volume)
 
     # Keep the script running
     while True:
