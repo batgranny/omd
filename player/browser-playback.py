@@ -8,10 +8,10 @@ import pygame  # Import pygame for MP3 playback
 # Constants
 MUSIC_DIR = "/home/pi/Music"
 BUTTONS = {
-    "up": 20,            # Volume Up button
+    "up": 24,            # Volume Up button
     "down": 6,           # Volume Down button
-    "select": 5,         # Play/Pause button
-    "back": 16           # Next button
+    "select": 16,         # Play/Pause button
+    "back": 5           # Next button
 }
 SPI_SPEED_MHZ = 80
 
