@@ -22,6 +22,7 @@ current_dir = MUSIC_DIR
 current_index = 0
 playing = False  # Track whether music is playing
 browsing = True  # Track whether the user is browsing
+paused = False   # Track whether playback is paused
 scroll_offset = 0
 
 # Set up GPIO
@@ -99,25 +100,37 @@ def display_playing(track, artist, album):
     st7789.display(image)
 
 def play_mp3(file_path):
-    """Play the selected MP3 file and display metadata."""
-    global playing, browsing
-    playing = True
-    browsing = False
-    pygame.mixer.music.load(file_path)
-    pygame.mixer.music.play()
+    """Play or pause the selected MP3 file and display metadata."""
+    global playing, paused, browsing
 
-    # Extract metadata
-    audio = MP3(file_path, ID3=EasyID3)
-    track = audio.get("title", ["Unknown Title"])[0]
-    artist = audio.get("artist", ["Unknown Artist"])[0]
-    album = audio.get("album", ["Unknown Album"])[0]
+    if playing and paused:
+        # Resume playback
+        pygame.mixer.music.unpause()
+        paused = False
+    elif playing:
+        # Pause playback
+        pygame.mixer.music.pause()
+        paused = True
+    else:
+        # Start playing a new file
+        pygame.mixer.music.load(file_path)
+        pygame.mixer.music.play()
+        playing = True
+        paused = False
+        browsing = False
 
-    # Display playing screen
-    display_playing(track, artist, album)
+        # Extract metadata
+        audio = MP3(file_path, ID3=EasyID3)
+        track = audio.get("title", ["Unknown Title"])[0]
+        artist = audio.get("artist", ["Unknown Artist"])[0]
+        album = audio.get("album", ["Unknown Album"])[0]
+
+        # Display playing screen
+        display_playing(track, artist, album)
 
 def button_pressed(channel):
     """Handle button presses."""
-    global current_dir, current_index, playing, browsing
+    global current_dir, current_index, playing, paused, browsing
     items = list_directory(current_dir)
 
     if browsing:
@@ -136,17 +149,21 @@ def button_pressed(channel):
             pygame.mixer.music.set_volume(volume)
 
     if channel == BUTTONS["select"]:
-        selected_item = items[current_index]
-        selected_path = os.path.join(current_dir, selected_item)
-        if os.path.isfile(selected_path) and selected_path.endswith('.mp3'):
-            play_mp3(selected_path)
-        elif os.path.isdir(selected_path):
-            current_dir = selected_path
-            current_index = 0
+        if not browsing:
+            play_mp3("")
+        else:
+            selected_item = items[current_index]
+            selected_path = os.path.join(current_dir, selected_item)
+            if os.path.isfile(selected_path) and selected_path.endswith('.mp3'):
+                play_mp3(selected_path)
+            elif os.path.isdir(selected_path):
+                current_dir = selected_path
+                current_index = 0
     elif channel == BUTTONS["back"]:
         if playing:
             pygame.mixer.music.stop()
             playing = False
+            paused = False
             browsing = True
         else:
             current_dir = os.path.dirname(current_dir)
