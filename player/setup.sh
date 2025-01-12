@@ -35,6 +35,10 @@ git clone https://github.com/pimoroni/pirate-audio
 cd pirate-audio/
 git checkout feature/pi5-mopidy
 cd ./mopidy/
+
+# need to modify this so we use our own install .sh that doesn't install mopidy and installs:
+pip3 install mutagen
+
 ./install.sh
 sudo apt install -y python3-pygame
 cd ~/
