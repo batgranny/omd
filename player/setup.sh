@@ -37,7 +37,7 @@ git checkout feature/pi5-mopidy
 cd ./mopidy/
 
 # need to modify this so we use our own install .sh that doesn't install mopidy and installs:
-pip3 install mutagen
+#pip3 install mutagen requests
 
 ./install.sh
 sudo apt install -y python3-pygame

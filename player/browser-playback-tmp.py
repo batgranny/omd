@@ -6,6 +6,9 @@ from st7789 import ST7789
 import pygame
 from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
+import requests
+from io import BytesIO
+import threading
 
 # Constants
 MUSIC_DIR = "/home/pi/Music"
@@ -21,11 +24,9 @@ SPI_SPEED_MHZ = 80
 current_dir = MUSIC_DIR
 current_index = 0
 playing = False  # Track whether music is playing
+paused = False   # Track whether music is paused
 browsing = True  # Track whether the user is browsing
-paused = False   # Track whether playback is paused
 scroll_offset = 0
-track_start_time = 0  # Time when the track started
-track_duration = 0    # Duration of the current track
 
 # Set up GPIO
 GPIO.setmode(GPIO.BCM)
@@ -79,11 +80,36 @@ def display_browsing(current_dir, current_index, items):
 
     st7789.display(image)
 
-def display_playing(track, artist, album):
-    """Display the track name, artist, and album while playing an MP3."""
+def fetch_album_art_online(track, artist):
+    """Fetch album art from iTunes API based on track and artist metadata."""
+    try:
+        query = f"{track} {artist}".replace(" ", "+")
+        url = f"https://itunes.apple.com/search?term={query}&limit=1"
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        if data["results"]:
+            artwork_url = data["results"][0].get("artworkUrl100")
+            if artwork_url:
+                # Download the artwork image
+                artwork_response = requests.get(artwork_url)
+                artwork_response.raise_for_status()
+                image_data = BytesIO(artwork_response.content)
+                return Image.open(image_data)
+    except Exception as e:
+        print(f"Error fetching online album art: {e}")
+    return None
+
+def display_playing_with_art(track, artist, album, album_art=None):
+    """Display the track name, artist, and album with album art."""
     global scroll_offset
-    image = Image.new("RGB", (240, 240), (0, 0, 0))
+    image = Image.new("RGB", (240, 240), (0, 0, 0))  # Default black background
     draw = ImageDraw.Draw(image)
+
+    # Add album art as background if available
+    if album_art:
+        image.paste(album_art)
 
     # Title scrolling
     title_bbox = draw.textbbox((0, 0), track, font=large_font)
@@ -102,97 +128,55 @@ def display_playing(track, artist, album):
     st7789.display(image)
 
 def play_mp3(file_path):
-    """Play or pause the selected MP3 file and display metadata."""
-    global playing, paused, browsing, track_start_time, track_duration
+    """Play the selected MP3 file and display metadata."""
+    global playing, browsing, paused
+    playing = True
+    browsing = False
+    paused = False  # Reset pause state when a new song starts
+    pygame.mixer.music.load(file_path)
+    pygame.mixer.music.play()
 
-    if playing and paused:
-        # Resume playback
-        print("Resuming playback")
-        pygame.mixer.music.unpause()
-        paused = False
-    elif playing:
-        # Pause playback
-        print("Pausing playback")
-        pygame.mixer.music.pause()
-        paused = True
+    # Extract metadata
+    audio = MP3(file_path, ID3=EasyID3)
+    track = audio.get("title", ["Unknown Title"])[0]
+    artist = audio.get("artist", ["Unknown Artist"])[0]
+    album = audio.get("album", ["Unknown Album"])[0]
+
+    # Immediately display playing screen with black background
+    display_playing_with_art(track, artist, album)
+
+    # Fetch album art asynchronously
+    threading.Thread(target=fetch_and_update_album_art, args=(track, artist, album)).start()
+
+def fetch_and_update_album_art(track, artist, album):
+    """Fetch album art asynchronously and update the screen."""
+    album_art = fetch_album_art_online(track, artist)
+    if album_art:
+        print(f"Album art fetched for {track} by {artist}")
+        # Resize and darken the album art
+        album_art_resized = album_art.resize((240, 240), Image.Resampling.LANCZOS)
+        black_overlay = Image.new("RGB", (240, 240), (0, 0, 0))  # Black overlay
+        darkened = Image.blend(album_art_resized, black_overlay, 0.5)  # Darken album art
     else:
-        # Start playing a new file
-        print(f"Playing file: {file_path}")
-        pygame.mixer.music.load(file_path)
-        pygame.mixer.music.play()
-        playing = True
-        paused = False
-        browsing = False
+        print(f"No album art found for {track} by {artist}")
+        darkened = None  # Default to black background
 
-        # Extract metadata
-        audio = MP3(file_path, ID3=EasyID3)
-        track = audio.get("title", ["Unknown Title"])[0]
-        artist = audio.get("artist", ["Unknown Artist"])[0]
-        album = audio.get("album", ["Unknown Album"])[0]
-        track_duration = audio.info.length
-        track_start_time = time.time()
+    # Update the display with the darkened album art
+    display_playing_with_art(track, artist, album, darkened)
 
-        print(f"Track metadata: Title='{track}', Artist='{artist}', Album='{album}'")
-        print(f"Track duration: {track_duration} seconds")
-
-        # Display playing screen
-        display_playing(track, artist, album)
-
-def play_next():
-    """Play the next MP3 in the directory."""
-    global current_index, playing, browsing, paused
-    items = list_directory(current_dir)  # Get the updated list of files
-    mp3_files = [item for item in items if item.endswith('.mp3')]
-
-    if not mp3_files:
-        print("No MP3 files in the current directory.")
-        return
-
-    # Ensure that the current_index wraps around the list of MP3 files
-    current_index = (current_index + 1) % len(mp3_files)
-    next_file = os.path.join(current_dir, mp3_files[current_index])
-
-    print(f"Auto-playing next file: {next_file}")
-
-    # Play the next file
-    play_mp3(next_file)
-
-def play_mp3(file_path):
-    """Play or pause the selected MP3 file and display metadata."""
-    global playing, paused, browsing, track_start_time, track_duration
-
-    if playing and paused:
-        # Resume playback
-        print("Resuming playback")
-        pygame.mixer.music.unpause()
-        paused = False
-    # elif playing:
-    #     # Pause playback
-    #     print("Pausing playback")
-    #     pygame.mixer.music.pause()
-    #     paused = True
+def next_track():
+    """Play the next track in the folder."""
+    global current_index, current_dir
+    items = list_directory(current_dir)
+    if current_index + 1 < len(items):
+        current_index += 1
     else:
-        # Start playing a new file
-        print(f"Playing file: {file_path}")
-        pygame.mixer.music.load(file_path)
-        pygame.mixer.music.play()
-        playing = True
-        paused = False
-        browsing = False
+        current_index = 0  # Start from the first song in the folder
 
-        # Extract metadata
-        audio = MP3(file_path, ID3=EasyID3)
-        track = audio.get("title", ["Unknown Title"])[0]
-        artist = audio.get("artist", ["Unknown Artist"])[0]
-        album = audio.get("album", ["Unknown Album"])[0]
-        track_duration = audio.info.length
-        track_start_time = time.time()
-
-        print(f"Track metadata: Title='{track}', Artist='{artist}', Album='{album}'")
-        print(f"Track duration: {track_duration} seconds")
-
-        # Display playing screen
-        display_playing(track, artist, album)
+    selected_item = items[current_index]
+    selected_path = os.path.join(current_dir, selected_item)
+    if os.path.isfile(selected_path) and selected_path.endswith('.mp3'):
+        play_mp3(selected_path)
 
 def button_pressed(channel):
     """Handle button presses."""
@@ -200,13 +184,11 @@ def button_pressed(channel):
     items = list_directory(current_dir)
 
     if browsing:
-        # Reverse behavior for browsing
         if channel == BUTTONS["up"]:
             current_index = (current_index + 1) % len(items)
         elif channel == BUTTONS["down"]:
             current_index = (current_index - 1) % len(items)
     else:
-        # Volume controls in playing mode
         if channel == BUTTONS["up"]:
             volume = min(pygame.mixer.music.get_volume() + 0.1, 1.0)
             pygame.mixer.music.set_volume(volume)
@@ -215,51 +197,49 @@ def button_pressed(channel):
             pygame.mixer.music.set_volume(volume)
 
     if channel == BUTTONS["select"]:
-        if not browsing:
-            print("Toggling playback (play/pause)")
-            play_mp3("")
+        if playing:
+            if paused:
+                pygame.mixer.music.unpause()
+                paused = False
+            else:
+                pygame.mixer.music.pause()
+                paused = True
         else:
             selected_item = items[current_index]
             selected_path = os.path.join(current_dir, selected_item)
             if os.path.isfile(selected_path) and selected_path.endswith('.mp3'):
-                print(f"Playing selected file: {selected_path}")
                 play_mp3(selected_path)
             elif os.path.isdir(selected_path):
-                print(f"Entering directory: {selected_path}")
                 current_dir = selected_path
                 current_index = 0
+
     elif channel == BUTTONS["back"]:
         if playing:
-            print("Stopping playback")
             pygame.mixer.music.stop()
             playing = False
-            paused = False
             browsing = True
         else:
-            print("Going up one directory level.")
             current_dir = os.path.dirname(current_dir)
             current_index = 0
 
-    # Refresh display
     if browsing:
         display_browsing(current_dir, current_index, list_directory(current_dir))
 
-# Attach button callbacks
+def check_and_play_next_track():
+    """Check if the current track has finished and play the next track."""
+    if not pygame.mixer.music.get_busy() and playing and not paused:
+        print("Track ended. Moving to next track.")
+        next_track()
+
 for button_name, pin in BUTTONS.items():
     GPIO.add_event_detect(pin, GPIO.FALLING, callback=button_pressed, bouncetime=300)
 
 try:
-    # Initial display
     items = list_directory(current_dir)
     display_browsing(current_dir, current_index, items)
 
     while True:
-        if playing and not paused:
-            elapsed_time = time.time() - track_start_time
-            print(f"Elapsed time: {elapsed_time:.2f} seconds")
-            if elapsed_time >= track_duration:
-                print("Track ended. Moving to next track.")
-                play_next()
+        check_and_play_next_track()
         time.sleep(0.1)
 except KeyboardInterrupt:
     print("\nExiting...")
