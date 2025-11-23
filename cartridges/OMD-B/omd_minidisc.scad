@@ -13,7 +13,7 @@ corner_r_inner = 2;   // inner window corners
 // Label recess (big window)
 label_margin_x = 4;
 label_margin_y = 9;
-label_d        = 0.6;
+label_d        = 0.3;
 
 // Top grips
 grip_w       = 30;
@@ -213,6 +213,7 @@ module miniDiscShell() {
         } // end difference()
 
         // 7) SIDE LATCHES INSIDE SLOT (outer stop, one each side)
+        /*
         // Left latch
         translate([
             cavity_x,                      // flush with left cavity wall
@@ -222,13 +223,14 @@ module miniDiscShell() {
             cube([latch_depth_x, latch_len_y, cav_t], center=false);
 
         // Right latch
-        translate([
+       translate([
             cavity_x + cav_w - latch_depth_x,  // flush with right cavity wall
             latch_offset_y,
             (body_t - cav_t)/2
         ])
-            cube([latch_depth_x, latch_len_y, cav_t], center=false);
 
+            cube([latch_depth_x, latch_len_y, cav_t], center=false);
+*/
         // 8) INNER STOP RIB (prevents tray vanishing completely inside)
         translate([
             cavity_x,
@@ -324,12 +326,12 @@ module sdTray() {
 // ===== PREVIEW / EXPORT =====
 
 // Shell only:
-// miniDiscShell();
+ //miniDiscShell();
 
 // Tray only:
 // sdTray();
 
 // Combined preview (shell + tray):
 miniDiscShell();
-translate([ (body_w - tray_w)/2, 0, (body_t - tray_t)/2 ])
-    color("red") sdTray();
+//translate([ (body_w - tray_w)/2, 0, (body_t - tray_t)/2 ])
+//    color("red") sdTray();
