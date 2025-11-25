@@ -45,10 +45,18 @@ pocket_d   = 1.6;
 // Slot / cavity sizing
 slot_height    = 3.3;       // increased for SD clearance (stack is ~3.0mm)
 slot_clearance = 0.3;       // clearance each side in X
+
+// We want the SD card (length sd_l) + tray back to sit slightly recessed
+// inside the shell when fully inserted.
+// The cavity starts at y = -3 and goes to y = -3 + cav_h,
+// so internal depth from the bottom edge is (cav_h - 3).
+recess_margin  = 2;                      // how far inside the shell the card sits
+cav_depth_int  = sd_l + recess_margin;   // internal depth from bottom edge
+cav_h          = cav_depth_int + 3;      // +3 because slot starts at y = -3
+
 cav_w          = tray_w + 2*slot_clearance;  // snug slot around tray
-cav_h          = 42;        // depth into the shell (travel)
 cav_t          = slot_height;
-cavity_x       = (body_w - cav_w)/2;  // centre slot under label
+cavity_x       = (body_w - cav_w)/2;    // centre slot under label
 
 // Finger access hole in underside (to push tray)
 finger_hole_w       = tray_w - 20;   // a bit narrower than tray
@@ -61,9 +69,6 @@ latch_depth_x   = 0.8;   // how far latches protrude into slot from each side
 latch_height_z  = slot_height;   // full height of slot
 latch_len_y     = 3.0;   // length along travel direction
 latch_offset_y  = 2.0;   // how far inside from slot opening (y=0)
-
-inner_stop_y    = 30;    // where tray hits inner stop (tweak to taste)
-inner_stop_thk  = 1.5;
 
 // Tray notches (matching latches)
 notch_depth_x     = latch_depth_x + 0.3; // a touch deeper than latch for clearance
@@ -212,7 +217,7 @@ module miniDiscShell() {
                     ]);
         } // end difference()
 
-        // 7) SIDE LATCHES INSIDE SLOT (outer stop, one each side)
+        // 7) SIDE LATCHES INSIDE SLOT – currently disabled while we debug fit
         /*
         // Left latch
         translate([
@@ -223,21 +228,14 @@ module miniDiscShell() {
             cube([latch_depth_x, latch_len_y, cav_t], center=false);
 
         // Right latch
-       translate([
+        translate([
             cavity_x + cav_w - latch_depth_x,  // flush with right cavity wall
             latch_offset_y,
             (body_t - cav_t)/2
         ])
-
             cube([latch_depth_x, latch_len_y, cav_t], center=false);
-*/
-        // 8) INNER STOP RIB (prevents tray vanishing completely inside)
-        translate([
-            cavity_x,
-            inner_stop_y,
-            (body_t - cav_t)/2
-        ])
-            cube([cav_w, inner_stop_thk, cav_t], center=false);
+        */
+        // No inner stop rib any more – cavity depth is controlling fully-in position
     }
 }
 
@@ -287,7 +285,7 @@ module sdTray() {
     }
 
     // Internal retaining lips (print-friendly ramps) – hold SD card in
-    lip_depth  = 0.4;   // reduced for smoother snap (was 0.8)
+    lip_depth  = 1.4;   // reduced for smoother snap (tweak after test)
     lip_height = 0.8;   // vertical size (Z)
     lip_len    = 3.0;   // length along Y
 
@@ -326,12 +324,12 @@ module sdTray() {
 // ===== PREVIEW / EXPORT =====
 
 // Shell only:
- //miniDiscShell();
+//miniDiscShell();
 
 // Tray only:
-// sdTray();
+ sdTray();
 
 // Combined preview (shell + tray):
-miniDiscShell();
-//translate([ (body_w - tray_w)/2, 0, (body_t - tray_t)/2 ])
-//    color("red") sdTray();
+// miniDiscShell();
+// translate([ (body_w - tray_w)/2, 0, (body_t - tray_t)/2 ])
+//     color("red") sdTray();
