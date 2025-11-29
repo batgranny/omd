@@ -2,9 +2,13 @@
 // with captive tray using side latches + tray notches
 
 // Overall body
-body_w = 68;
-body_h = 72;
-body_t = 5;
+prusa_mini_mode = true;   // set false if slicing on a different printer
+body_w          = 68;
+body_h_full     = 72;
+// Set body_h_test < body_h_full to print a shortened shell (for quick tray/aperture tests)
+body_h_test = body_h_full;
+body_h      = body_h_test;
+body_t      = 5;
 
 // Corner radii
 corner_r_outer = 2;   // outer shell corners
@@ -43,8 +47,11 @@ pocket_l   = tray_h - nose_buf;   // 25 - 4 = 21mm
 pocket_d   = 1.6;
 
 // Slot / cavity sizing
-slot_height    = 3.3;       // increased for SD clearance (stack is ~3.0mm)
-slot_clearance = 0.3;       // clearance each side in X
+slot_height_base    = 3.3;                  // clearance for SD stack (~3.0mm)
+bridge_sag_allowance = prusa_mini_mode ? 0.2 : 0;  // extra headroom for 0.4mm nozzle bridging
+slot_height         = slot_height_base + bridge_sag_allowance;
+slot_clearance_base = 0.3;
+slot_clearance      = slot_clearance_base + (prusa_mini_mode ? 0.05 : 0); // a touch looser for Mini/Mini+
 
 // We want the SD card (length sd_l) + tray back to sit slightly recessed
 // inside the shell when fully inserted.
@@ -74,7 +81,14 @@ latch_offset_y  = 2.0;   // how far inside from slot opening (y=0)
 notch_depth_x     = latch_depth_x + 0.3; // a touch deeper than latch for clearance
 notch_height_z    = 1.6;
 notch_len_y       = 3.2;
-notch_from_front  = 6.0;         // distance back from tray front edge
+notch_from_front  = 6.0;         // distance back from tray front edge (extended lock)
+notch_from_back   = 6.0;         // distance forward from tray rear (retracted lock)
+
+// Lead-in chamfer for shell slot to ease first insert
+slot_chamfer = 0.6;
+
+// Front over-travel stop height (small rib on roof near opening)
+front_stop_h = 0.8;
 
 // ---------- helper: 2D rounded rectangle ----------
 module rounded_rect_2d(w,h,r){
@@ -121,12 +135,21 @@ module miniDiscShell() {
                 rounded_rect_2d(body_w, body_h, corner_r_outer);
 
             // 2) INTERNAL TRAY CAVITY – centred slot, open at bottom edge only
-            translate([
-                cavity_x,                    // centre in X
-                -3,                          // extend a bit below bottom edge to open it
-                (body_t - cav_t)/2           // centre vertically: plastic above and below
-            ])
-                cube([cav_w, cav_h, cav_t], center=false);
+            // Add a small chamfer on the opening edges to ease first insertion.
+            hull() {
+                translate([
+                    cavity_x + slot_chamfer,
+                    -3,
+                    (body_t - cav_t)/2 + slot_chamfer
+                ])
+                    cube([cav_w - 2*slot_chamfer, cav_h, cav_t - 2*slot_chamfer], center=false);
+                translate([
+                    cavity_x,
+                    -3 - slot_chamfer,
+                    (body_t - cav_t)/2
+                ])
+                    cube([cav_w, cav_h, cav_t], center=false);
+            }
 
             // 2b) RECTANGULAR FINGER HOLE IN UNDERSIDE
             translate([
@@ -217,25 +240,59 @@ module miniDiscShell() {
                     ]);
         } // end difference()
 
-        // 7) SIDE LATCHES INSIDE SLOT – currently disabled while we debug fit
-        /*
+        // 7) SIDE LATCHES INSIDE SLOT with ramped lead-in for first-time insertion
         // Left latch
-        translate([
-            cavity_x,                      // flush with left cavity wall
-            latch_offset_y,                // inside from opening
-            (body_t - cav_t)/2             // centred vertically in slot
-        ])
-            cube([latch_depth_x, latch_len_y, cav_t], center=false);
+        difference() {
+            translate([
+                cavity_x,                      // flush with left cavity wall
+                latch_offset_y,                // inside from opening
+                (body_t - cav_t)/2             // centred vertically in slot
+            ])
+                cube([latch_depth_x, latch_len_y, cav_t], center=false);
+            // bevel leading edge to create a ramp for insertion flex
+            translate([
+                cavity_x - 0.01,
+                latch_offset_y - 0.01,
+                (body_t - cav_t)/2 + cav_t - notch_height_z
+            ])
+                rotate([0,90,0])
+                    linear_extrude(height = latch_depth_x + 0.02)
+                        polygon([[0,0],[notch_height_z,0],[0,latch_len_y+0.02]]);
+        }
 
         // Right latch
+        difference() {
+            translate([
+                cavity_x + cav_w - latch_depth_x,  // flush with right cavity wall
+                latch_offset_y,
+                (body_t - cav_t)/2
+            ])
+                cube([latch_depth_x, latch_len_y, cav_t], center=false);
+            translate([
+                cavity_x + cav_w - latch_depth_x - 0.01,
+                latch_offset_y - 0.01,
+                (body_t - cav_t)/2 + cav_t - notch_height_z
+            ])
+                rotate([0,90,0])
+                    linear_extrude(height = latch_depth_x + 0.02)
+                        polygon([[0,0],[notch_height_z,0],[0,latch_len_y+0.02]]);
+        }
+
+        // 8) FRONT STOP RIB ON ROOF TO PREVENT OVER-TRAVEL/EXIT WHEN EXTENDED
         translate([
-            cavity_x + cav_w - latch_depth_x,  // flush with right cavity wall
-            latch_offset_y,
+            cavity_x,
+            latch_offset_y + latch_len_y + 1.0,
+            (body_t + cav_t)/2 - front_stop_h
+        ])
+            cube([cav_w, 1.0, front_stop_h], center=false);
+
+        // 9) REAR STOP RIB TO LOCATE FULLY-RETRACTED POSITION
+        translate([
+            cavity_x,
+            cav_h - 1.5,
             (body_t - cav_t)/2
         ])
-            cube([latch_depth_x, latch_len_y, cav_t], center=false);
-        */
-        // No inner stop rib any more – cavity depth is controlling fully-in position
+            cube([cav_w, 1.5, cav_t], center=false);
     }
 }
 
@@ -264,13 +321,14 @@ module sdTray() {
         ])
             cube([pocket_w, pocket_l, pocket_d], center = false);
 
-        // Side notches for shell latches (one each side, near front)
-        notch_y = tray_h - notch_from_front - notch_len_y;
+        // Side notches for shell latches (two positions: extended + retracted)
+        notch_y_front = tray_h - notch_from_front - notch_len_y;
+        notch_y_back  = notch_from_back;
 
         // Left notch
         translate([
             0,
-            notch_y,
+            notch_y_front,
             tray_t - notch_height_z
         ])
             cube([notch_depth_x, notch_len_y, notch_height_z], center=false);
@@ -278,7 +336,22 @@ module sdTray() {
         // Right notch
         translate([
             tray_w - notch_depth_x,
-            notch_y,
+            notch_y_front,
+            tray_t - notch_height_z
+        ])
+            cube([notch_depth_x, notch_len_y, notch_height_z], center=false);
+
+        // Rear (retracted) notches
+        translate([
+            0,
+            notch_y_back,
+            tray_t - notch_height_z
+        ])
+            cube([notch_depth_x, notch_len_y, notch_height_z], center=false);
+
+        translate([
+            tray_w - notch_depth_x,
+            notch_y_back,
             tray_t - notch_height_z
         ])
             cube([notch_depth_x, notch_len_y, notch_height_z], center=false);
