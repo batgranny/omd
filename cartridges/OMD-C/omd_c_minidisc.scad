@@ -191,8 +191,14 @@ module miniDiscShell() {
                             ]);
                     }
                 }
+                
+            // 6) "OMD" TEXT RECESS BOTTOM-LEFT
+            text_d = 0.4; // Depth of recess
+            translate([5.5, 3.5, body_t - text_d])
+                linear_extrude(height = text_d + 0.1)
+                    text("OMD", size = 4.0, font = "Arial:style=Bold");
 
-            // 6) SIDE GRIP VENTS (both sides)
+            // 7) SIDE GRIP VENTS (both sides)
             side_grip_count   = 3;
             side_grip_w       = 1;   // along Y
             side_grip_h       = 4.0;   // along Z
@@ -357,17 +363,17 @@ module sdSlider() {
 miniDiscShell();
 
 // Show in EXTENDED position (Comment out to hide)
-translate([ cavity_x + slot_clearance, latch_1_y - notch_from_front, (body_t - slider_t)/2 ]) {
-    color("red") sdSlider();
+//translate([ cavity_x + slot_clearance, latch_1_y - notch_from_front, (body_t - slider_t)/2 ]) {
+//    color("red") sdSlider();
     // Mock SD Card
-    translate([ (slider_w - sd_w)/2, slider_grip_l - sd_l, slider_t - pocket_d])
-        color("blue") cube([sd_w, sd_l, 2.1]);
-}
+//    translate([ (slider_w - sd_w)/2, slider_grip_l - sd_l, slider_t - pocket_d])
+//        color("blue") cube([sd_w, sd_l, 2.1]);
+//}
 
 // Show in RETRACTED position
-// translate([ cavity_x + slot_clearance, latch_2_y - notch_from_front, (body_t - slider_t)/2 ]) {
-//     color("green") sdSlider();
+ translate([ cavity_x + slot_clearance, latch_2_y - notch_from_front, (body_t - slider_t)/2 ]) {
+     color("green") sdSlider();
 //     // Mock SD Card
-//     translate([ (slider_w - sd_w)/2, slider_grip_l - sd_l, slider_t - pocket_d])
-//         color("purple") cube([sd_w, sd_l, 2.1]);
-// }
+     translate([ (slider_w - sd_w)/2, slider_grip_l - sd_l, slider_t - pocket_d])
+         color("purple") cube([sd_w, sd_l, 2.1]);
+ }
